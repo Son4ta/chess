@@ -23,6 +23,8 @@ void Board::main_thread()
 		drawtext(_T("白方先手！对弈即将开始"), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 	}
 	Sleep(3000);
+	draw_board();
+	Sleep(3000);
 }
 
 void Board::welcome()
@@ -31,7 +33,45 @@ void Board::welcome()
 
 void Board::draw_board()
 {
-	for (int i = BOARD_CORNER_X, j = BOARD_CORNER_Y;)
+	cleardevice();
+	BeginBatchDraw();
+	for (int i = 0; i != BOARD_SIZE; i += 4) {
+		line(BOARD_CORNER_X, BOARD_CORNER_Y, BOARD_CORNER_X + i, BOARD_CORNER_Y);
+		line(BOARD_CORNER_X, BOARD_CORNER_Y, BOARD_CORNER_X, BOARD_CORNER_Y + i);
+		line(BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE, BOARD_CORNER_X + BOARD_SIZE - i, BOARD_CORNER_Y + BOARD_SIZE);
+		line(BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE, BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE - i);
+		Sleep(1);
+		FlushBatchDraw();
+	}
+	EndBatchDraw();
+	Sleep(20);
+	BeginBatchDraw();
+	for (int j = 0; j <= 255; j++) {
+		setlinecolor(RGB(j, j, j));
+		for (int i = 0; i <= LINE; i++) {
+			line(BOARD_CORNER_X + i * GRID, BOARD_CORNER_Y, BOARD_CORNER_X + i * GRID, BOARD_CORNER_Y + BOARD_SIZE);
+			line(BOARD_CORNER_X, BOARD_CORNER_Y + i * GRID, BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + i * GRID);
+		}
+		FlushBatchDraw();
+	}
+	for (int j = 255; j >= 0; j--) {
+		setlinecolor(RGB(j, j, j));
+		for (int i = 0; i <= LINE; i++) {
+			line(BOARD_CORNER_X + i * GRID, BOARD_CORNER_Y, BOARD_CORNER_X + i * GRID, BOARD_CORNER_Y + BOARD_SIZE);
+			line(BOARD_CORNER_X, BOARD_CORNER_Y + i * GRID, BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + i * GRID);
+		}
+		Sleep(1);
+		FlushBatchDraw();
+	}
+	for (int j = 0; j <= 255; j++) {
+		setlinecolor(RGB(j, j, j));
+		for (int i = 0; i <= LINE; i++) {
+			line(BOARD_CORNER_X + i * GRID, BOARD_CORNER_Y, BOARD_CORNER_X + i * GRID, BOARD_CORNER_Y + BOARD_SIZE);
+			line(BOARD_CORNER_X, BOARD_CORNER_Y + i * GRID, BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + i * GRID);
+		}
+		FlushBatchDraw();
+	}
+	EndBatchDraw();
 }
 
 bool Board::dice()
