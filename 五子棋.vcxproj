@@ -140,7 +140,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
-    <ClCompile Include="Board实现.cpp" />
     <ClCompile Include="五子棋.cpp" />
   </ItemGroup>
   <ItemGroup>

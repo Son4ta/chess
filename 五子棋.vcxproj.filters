@@ -18,9 +18,6 @@
     <ClCompile Include="五子棋.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Board实现.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Board.cpp">
       <Filter>源文件</Filter>
     </ClCompile>

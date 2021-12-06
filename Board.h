@@ -23,7 +23,6 @@ public:
 	bool black;						//下棋顺序
 	Board();
 	void main_thread();             //主线程
-
 	void welcome();					//开始界面
 	void draw_board();				//绘制棋盘
 	void draw_time();				//30秒倒计时
