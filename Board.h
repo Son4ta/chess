@@ -10,12 +10,13 @@
 constexpr auto WINDOS_X = 1600;										//窗口宽
 constexpr auto WINDOS_Y = 900;										//窗口高
 constexpr auto BOARD_SIZE = 800;									//棋盘大小
-constexpr auto LINE = 20;											//20x20格
+constexpr auto LINE = 16;											//20x20格
 constexpr auto TIME = 30;											//30秒
 //AUTO
 constexpr auto BOARD_CORNER_X = (WINDOS_X - BOARD_SIZE) / 2;		//棋盘左上角坐标x
 constexpr auto BOARD_CORNER_Y = (WINDOS_Y - BOARD_SIZE) / 2;		//棋盘左上角坐标y
 constexpr auto GRID = BOARD_SIZE / LINE;							//格子边长
+constexpr auto RADIUS = GRID / 2 - 2;								//棋子半径
 
 class Board {
 public:
