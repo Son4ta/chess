@@ -8,26 +8,73 @@ Board::Board()
 			record[i][j] = 0;
 		}
 	}
-	who = 0;
+	who = 1;
 	who_win = 0;
 	num = 0;
 	sum_time = 0;
+	count = 0;
 }
 
 void Board::main_thread()
 {
 	initgraph(1600, 900);				//窗口初始化
 	setbkcolor(RGB(40, 40, 40));		//更新背景颜色
+	welcome();
 	cleardevice();
-	//dice();						//调用骰子函数
-	//Sleep(3000);
+	dice();								//调用骰子函数
+	Sleep(3000);
 	draw_board();
 	fight();
+	Sleep(1000);
+	win();
 	Sleep(1000);
 }
 
 void Board::welcome()
 {
+	while (!_kbhit()) {
+		for (int i = 0; i <= 40; i += 1) {
+			setbkcolor(RGB(i, i, i));		//更新背景颜色
+			RECT r = { 0, WINDOS_Y / 4 , WINDOS_X, (WINDOS_Y / 4) * 3 };
+			settextstyle(120, 0, _T("黑体"));	//字体设置
+			settextcolor(RGB(255, 255, 255));	//字体颜色设置
+			drawtext(_T("Five in a Row"), &r, DT_CENTER | DT_VCENTER);
+
+			r = { 0, WINDOS_Y / 4 + 200, WINDOS_X, (WINDOS_Y / 4) * 3 + 200 };
+			settextstyle(40, 0, _T("黑体"));	//字体设置
+			drawtext(_T("按空格键来投掷骰子开始游戏"), &r, DT_CENTER | DT_VCENTER);
+			//cleardevice();
+
+			r = { 0, WINDOS_Y / 4 + 600, WINDOS_X, (WINDOS_Y / 4) * 3 + 600 };
+			settextstyle(40, 0, _T("黑体"));	//字体设置
+			drawtext(_T("Power by Son4ta"), &r, DT_CENTER | DT_VCENTER);
+			//cleardevice();
+			Sleep(1);
+		}
+		for (int i = 40; i >= 0; i -= 1) {
+			setbkcolor(RGB(i, i, i));		//更新背景颜色
+			RECT r = { 0, WINDOS_Y / 4, WINDOS_X, (WINDOS_Y / 4) * 3 };
+			settextstyle(120, 0, _T("黑体"));	//字体设置
+			settextcolor(RGB(255, 255, 255));	//字体颜色设置
+			drawtext(_T("Five in a Row"), &r, DT_CENTER | DT_VCENTER);
+
+			r = { 0, WINDOS_Y / 4 + 200, WINDOS_X, (WINDOS_Y / 4) * 3 + 200 };
+			settextstyle(40, 0, _T("黑体"));	//字体设置
+			drawtext(_T("按空格键来投掷骰子开始游戏"), &r, DT_CENTER | DT_VCENTER);
+			//cleardevice();
+
+			r = { 0, WINDOS_Y / 4 + 600, WINDOS_X, (WINDOS_Y / 4) * 3 + 600 };
+			settextstyle(40, 0, _T("黑体"));	//字体设置
+			drawtext(_T("Power by Son4ta"), &r, DT_CENTER | DT_VCENTER);
+			//cleardevice();
+			Sleep(1);
+		}
+	}
+	for (int i = 0; i <= 40; i += 1) {
+		setbkcolor(RGB(i, i, i));		//更新背景颜色
+		cleardevice();
+		Sleep(1);
+	}
 }
 
 void Board::draw_board()
@@ -90,32 +137,70 @@ void Board::draw_board()
 
 bool Board::time_judge()
 {
-	wchar_t c[10];
+	if (num == -1) {						//超时！对方胜
+		who_win = (who == 1) ? 2 : 1;
+		return false;
+	}
+
+	wchar_t c[10];							//数字转字符串
 	_itow_s(num, c, 10, 10);
 	wstring str(c);
-	outtextxy(160, 165, c);
+
+	if (who == 2) {
+		RECT r = { 50, 50, 350, 150 };
+		settextstyle(50, 0, _T("黑体"));	//字体设置
+		settextcolor(RGB(255, 255, 255));	//字体颜色设置
+		drawtext(_T("等待白方执棋"), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+
+		r = { 50, 150, 350, 250 };
+		settextstyle(70, 0, _T("黑体"));	//字体设置
+		settextcolor(RGB(255, 255, 255));	//字体颜色设置
+		if (num <= WARNING) {
+			settextstyle(125, 0, _T("黑体"));
+			settextcolor(RGB(254, 63, 66));
+		}
+		drawtext(c, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	}
+	else {
+		RECT r = { 1250, 50, 1550, 150 };
+		settextstyle(50, 0, _T("黑体"));	//字体设置
+		settextcolor(RGB(0, 0, 0));	//字体颜色设置
+		drawtext(_T("等待黑方执棋"), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+
+		r = { 1250, 150, 1550, 250 };
+		settextstyle(70, 0, _T("黑体"));	//字体设置
+		settextcolor(RGB(0, 0, 0));	//字体颜色设置
+		if (num <= WARNING) {
+			settextstyle(125, 0, _T("黑体"));
+			settextcolor(RGB(254, 63, 66));
+		}
+		drawtext(c, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	}
+	settextstyle(50, 0, _T("黑体"));
 	return true;
 }
 
 void Board::fight()
 {
-	ExMessage mouse;		// 定义消息变量
-	clock_t start = clock(), end = clock();		//计时用
-	wchar_t c[10];
-	while (!who_win && time_judge())								//我超，没人赢，都在演是吧
+	ExMessage mouse;								// 定义消息变量
+	clock_t start = clock(), end = clock();			//计时用
+	num = TIME - ((end - start) / 1000);			//初始化计时器避免一开始就闪红字
+	cleardevice(); renew_board();
+	while (!who_win && time_judge())				//我超，没人赢，都在演是吧
 	{
 		end = clock();
 		peekmessage(&mouse, EM_MOUSE | EM_KEY);		// 获取一条鼠标或按键消息
-		num = (end - start) / 1000;				//计时器
-		renew_board();
+		num = TIME - ((end - start) / 1000);		//计时器
 		switch (mouse.message)
 		{
 		case WM_LBUTTONDOWN:
 			// 如果点左键
 			if (locate(mouse.x, mouse.y)) {			//交给judge函数判断落子位置与输赢
 				who = (who == 1) ? 2 : 1;			//切换执棋者
+				count++;							//记录棋子个数
 				start = clock();					//重置计时器
 				end = clock();
+				num = TIME - ((end - start) / 1000);//初始化计时器
 			}
 			break;
 
@@ -205,6 +290,7 @@ bool Board::locate(int x, int y)
 	//判断输赢
 	judge(location_x, location_y);
 	//更新棋盘
+	cleardevice();
 	renew_board();
 	return true;
 }
@@ -271,10 +357,10 @@ void Board::renew_board()
 	line(BOARD_CORNER_X, BOARD_CORNER_Y, BOARD_CORNER_X, BOARD_CORNER_Y + BOARD_SIZE);
 	line(BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE, BOARD_CORNER_X + BOARD_SIZE - BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE);
 	line(BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE, BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE - BOARD_SIZE);
-	line(BOARD_CORNER_X - DECORATE, BOARD_CORNER_Y - DECORATE, BOARD_CORNER_X + BOARD_SIZE + DECORATE + FIX, BOARD_CORNER_Y - DECORATE);
-	line(BOARD_CORNER_X - DECORATE, BOARD_CORNER_Y - DECORATE, BOARD_CORNER_X - DECORATE, BOARD_CORNER_Y + BOARD_SIZE + DECORATE + FIX);
-	line(BOARD_CORNER_X + BOARD_SIZE + DECORATE, BOARD_CORNER_Y + BOARD_SIZE + DECORATE, BOARD_CORNER_X + BOARD_SIZE - BOARD_SIZE - DECORATE - FIX, BOARD_CORNER_Y + BOARD_SIZE + DECORATE);
-	line(BOARD_CORNER_X + BOARD_SIZE + DECORATE, BOARD_CORNER_Y + BOARD_SIZE + DECORATE, BOARD_CORNER_X + BOARD_SIZE + DECORATE, BOARD_CORNER_Y + BOARD_SIZE - BOARD_SIZE - DECORATE - FIX);
+	line(BOARD_CORNER_X - DECORATE, BOARD_CORNER_Y - DECORATE, BOARD_CORNER_X + BOARD_SIZE + DECORATE, BOARD_CORNER_Y - DECORATE);
+	line(BOARD_CORNER_X - DECORATE, BOARD_CORNER_Y - DECORATE, BOARD_CORNER_X - DECORATE, BOARD_CORNER_Y + BOARD_SIZE + DECORATE);
+	line(BOARD_CORNER_X + BOARD_SIZE + DECORATE, BOARD_CORNER_Y + BOARD_SIZE + DECORATE, BOARD_CORNER_X + BOARD_SIZE - BOARD_SIZE - DECORATE, BOARD_CORNER_Y + BOARD_SIZE + DECORATE);
+	line(BOARD_CORNER_X + BOARD_SIZE + DECORATE, BOARD_CORNER_Y + BOARD_SIZE + DECORATE, BOARD_CORNER_X + BOARD_SIZE + DECORATE, BOARD_CORNER_Y + BOARD_SIZE - BOARD_SIZE - DECORATE);
 	setlinestyle(PS_SOLID, 1);
 	//绘制格子
 	for (int i = 0; i <= LINE; i++) {
@@ -294,4 +380,49 @@ void Board::renew_board()
 		}
 	}
 	EndBatchDraw();
+}
+
+void Board::win()
+{
+	BeginBatchDraw();
+	if (who_win == 2) {
+		for (int i = 150; i <= 220; i += 1) {
+			renew_board();
+			setbkcolor(RGB(i, i, i));		//更新背景颜色
+			Sleep(5);
+			cleardevice();
+		}
+		for (int i = 220; i >= 150; i -= 4) {
+			setlinecolor(RGB(i, i, i));
+			setfillcolor(RGB(i, i, i));
+			fillrectangle(0, WINDOS_Y / 4, WINDOS_X, (WINDOS_Y / 4) * 3);
+			Sleep(1);
+		}
+		RECT r = { 0, WINDOS_Y / 4, WINDOS_X, (WINDOS_Y / 4) * 3 };
+		settextstyle(100, 0, _T("黑体"));	//字体设置
+		settextcolor(RGB(255, 255, 255));	//字体颜色设置
+		drawtext(_T("白方棋手胜利"), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	}
+	if (who_win == 1) {
+		for (int i = 150; i >= 50; i -= 1) {
+			renew_board();
+			setbkcolor(RGB(i, i, i));		//更新背景颜色
+			Sleep(1);
+			cleardevice();
+		}
+		for (int i = 50; i <= 150; i += 4) {
+			setlinecolor(RGB(i, i, i));
+			setfillcolor(RGB(i, i, i));
+			fillrectangle(0, WINDOS_Y / 4, WINDOS_X, (WINDOS_Y / 4) * 3);
+			Sleep(1);
+		}
+		RECT r = { 0, WINDOS_Y / 4, WINDOS_X, (WINDOS_Y / 4) * 3 };
+		settextstyle(100, 0, _T("黑体"));	//字体设置
+		settextcolor(RGB(0, 0, 0));	//字体颜色设置
+		drawtext(_T("黑方棋手胜利"), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	}
+	if (who_win == 0) {
+	}
+	EndBatchDraw();
+	Sleep(3000);
 }
