@@ -10,15 +10,17 @@ Board::Board()
 	}
 	who = 0;
 	who_win = 0;
+	num = 0;
+	sum_time = 0;
 }
 
 void Board::main_thread()
 {
 	initgraph(1600, 900);				//窗口初始化
-	setbkcolor(RGB(30, 30, 30));		//更新背景颜色
+	setbkcolor(RGB(40, 40, 40));		//更新背景颜色
 	cleardevice();
-	dice();						//调用骰子函数
-	Sleep(3000);
+	//dice();						//调用骰子函数
+	//Sleep(3000);
 	draw_board();
 	fight();
 	Sleep(1000);
@@ -32,17 +34,29 @@ void Board::draw_board()
 {
 	//绘制棋盘线
 	cleardevice();
-	//绘制边线
+	for (int i = 40; i <= 150; i += 1) {
+		setbkcolor(RGB(i, i, i));		//更新背景颜色
+		Sleep(1);
+		cleardevice();
+	}
 	BeginBatchDraw();
 	for (int i = 0; i != BOARD_SIZE; i += 4) {
+		setlinestyle(PS_SOLID, 3);
+		//绘制边线
 		line(BOARD_CORNER_X, BOARD_CORNER_Y, BOARD_CORNER_X + i, BOARD_CORNER_Y);
 		line(BOARD_CORNER_X, BOARD_CORNER_Y, BOARD_CORNER_X, BOARD_CORNER_Y + i);
 		line(BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE, BOARD_CORNER_X + BOARD_SIZE - i, BOARD_CORNER_Y + BOARD_SIZE);
 		line(BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE, BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE - i);
+		//绘制装饰线
+		line(BOARD_CORNER_X - DECORATE, BOARD_CORNER_Y - DECORATE, BOARD_CORNER_X + i + DECORATE + FIX, BOARD_CORNER_Y - DECORATE);
+		line(BOARD_CORNER_X - DECORATE, BOARD_CORNER_Y - DECORATE, BOARD_CORNER_X - DECORATE, BOARD_CORNER_Y + i + DECORATE + FIX);
+		line(BOARD_CORNER_X + BOARD_SIZE + DECORATE, BOARD_CORNER_Y + BOARD_SIZE + DECORATE, BOARD_CORNER_X + BOARD_SIZE - i - DECORATE - FIX, BOARD_CORNER_Y + BOARD_SIZE + DECORATE);
+		line(BOARD_CORNER_X + BOARD_SIZE + DECORATE, BOARD_CORNER_Y + BOARD_SIZE + DECORATE, BOARD_CORNER_X + BOARD_SIZE + DECORATE, BOARD_CORNER_Y + BOARD_SIZE - i - DECORATE - FIX);
 		Sleep(1);
 		FlushBatchDraw();
 	}
 	EndBatchDraw();
+	setlinestyle(PS_SOLID, 1);
 	Sleep(20);
 	//绘制格子，闪动效果
 	BeginBatchDraw();
@@ -74,24 +88,41 @@ void Board::draw_board()
 	//绘制两边信息
 }
 
+bool Board::time_judge()
+{
+	wchar_t c[10];
+	_itow_s(num, c, 10, 10);
+	wstring str(c);
+	outtextxy(160, 165, c);
+	return true;
+}
+
 void Board::fight()
 {
 	ExMessage mouse;		// 定义消息变量
-	while (!who_win)		//我超，没人赢，都在演是吧
+	clock_t start = clock(), end = clock();		//计时用
+	wchar_t c[10];
+	while (!who_win && time_judge())								//我超，没人赢，都在演是吧
 	{
-		mouse = getmessage(EM_MOUSE | EM_KEY);	// 获取一条鼠标或按键消息
-
+		end = clock();
+		peekmessage(&mouse, EM_MOUSE | EM_KEY);		// 获取一条鼠标或按键消息
+		num = (end - start) / 1000;				//计时器
+		renew_board();
 		switch (mouse.message)
 		{
 		case WM_LBUTTONDOWN:
 			// 如果点左键
-			locate(mouse.x, mouse.y);			//交给judge函数判断落子位置与输赢
-			who = (who == 1) ? 2 : 1;			//切换执棋者
+			if (locate(mouse.x, mouse.y)) {			//交给judge函数判断落子位置与输赢
+				who = (who == 1) ? 2 : 1;			//切换执棋者
+				start = clock();					//重置计时器
+				end = clock();
+			}
 			break;
 
 		case WM_KEYDOWN:
 			if (mouse.vkcode == VK_ESCAPE)
-				break;							// 按 ESC 键退出程序
+				return;								// 按 ESC 键退出程序
+			break;
 		}
 	}
 }
@@ -157,13 +188,25 @@ bool Board::locate(int x, int y)
 	//修正location
 	location_x += correct_x;
 	location_y += correct_y;
+	//已有棋子就退出
+	if (record[location_x][location_y] != 0) {
+		return false;
+	}
+	//x坐标非法
+	if ((location_x > LINE) || (location_x < 0)) {
+		return false;
+	}
+	//y坐标非法
+	if ((location_y > LINE) || (location_y < 0)) {
+		return false;
+	}
 	//在记录中更新棋盘中的棋子
 	record[location_x][location_y] = who;
 	//判断输赢
 	judge(location_x, location_y);
 	//更新棋盘
 	renew_board();
-	return false;
+	return true;
 }
 
 void Board::judge(int location_x, int location_y) {
@@ -221,6 +264,23 @@ void Board::judge(int location_x, int location_y) {
 
 void Board::renew_board()
 {
+	BeginBatchDraw();
+	setlinestyle(PS_SOLID, 3);
+	//重写绘制所有线
+	line(BOARD_CORNER_X, BOARD_CORNER_Y, BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y);
+	line(BOARD_CORNER_X, BOARD_CORNER_Y, BOARD_CORNER_X, BOARD_CORNER_Y + BOARD_SIZE);
+	line(BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE, BOARD_CORNER_X + BOARD_SIZE - BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE);
+	line(BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE, BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + BOARD_SIZE - BOARD_SIZE);
+	line(BOARD_CORNER_X - DECORATE, BOARD_CORNER_Y - DECORATE, BOARD_CORNER_X + BOARD_SIZE + DECORATE + FIX, BOARD_CORNER_Y - DECORATE);
+	line(BOARD_CORNER_X - DECORATE, BOARD_CORNER_Y - DECORATE, BOARD_CORNER_X - DECORATE, BOARD_CORNER_Y + BOARD_SIZE + DECORATE + FIX);
+	line(BOARD_CORNER_X + BOARD_SIZE + DECORATE, BOARD_CORNER_Y + BOARD_SIZE + DECORATE, BOARD_CORNER_X + BOARD_SIZE - BOARD_SIZE - DECORATE - FIX, BOARD_CORNER_Y + BOARD_SIZE + DECORATE);
+	line(BOARD_CORNER_X + BOARD_SIZE + DECORATE, BOARD_CORNER_Y + BOARD_SIZE + DECORATE, BOARD_CORNER_X + BOARD_SIZE + DECORATE, BOARD_CORNER_Y + BOARD_SIZE - BOARD_SIZE - DECORATE - FIX);
+	setlinestyle(PS_SOLID, 1);
+	//绘制格子
+	for (int i = 0; i <= LINE; i++) {
+		line(BOARD_CORNER_X + i * GRID, BOARD_CORNER_Y, BOARD_CORNER_X + i * GRID, BOARD_CORNER_Y + BOARD_SIZE);
+		line(BOARD_CORNER_X, BOARD_CORNER_Y + i * GRID, BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + i * GRID);
+	}
 	for (int i = 0; i <= LINE; i++) {
 		for (int j = 0; j <= LINE; j++) {
 			if (record[i][j] == 1) {
@@ -233,4 +293,5 @@ void Board::renew_board()
 			}
 		}
 	}
+	EndBatchDraw();
 }

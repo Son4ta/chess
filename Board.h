@@ -5,6 +5,7 @@
 #include <graphics.h>
 #include <time.h>
 #include <string>
+#include <sstream>
 using namespace std;
 //#include <conio.h>
 //手动调节
@@ -13,6 +14,8 @@ constexpr auto WINDOS_Y = 900;										//窗口高
 constexpr auto BOARD_SIZE = 800;									//棋盘大小
 constexpr auto LINE = 16;											//20x20格
 constexpr auto TIME = 30;											//30秒
+constexpr auto DECORATE = 15;										//装饰线
+constexpr auto FIX = 4;												//修正
 //AUTO
 constexpr auto BOARD_CORNER_X = (WINDOS_X - BOARD_SIZE) / 2;		//棋盘左上角坐标x
 constexpr auto BOARD_CORNER_Y = (WINDOS_Y - BOARD_SIZE) / 2;		//棋盘左上角坐标y
@@ -24,16 +27,19 @@ public:
 	int record[LINE + 1][LINE + 1];		//棋盘上现有棋子 0无1黑2白 有16格=有17个点可以下
 	int who_win;						//1黑赢2白赢
 	int who;							//谁在下棋？
+	int num;							//时间
+	int sum_time;						//总时间
 	Board();
 	void main_thread();					// 主线程
 	void welcome();						//开始界面
 	void draw_board();					//绘制棋盘
-	void draw_time();					//30秒倒计时
+	bool time_judge();					//30秒倒计时
 	void fight();						//下棋！
 	void dice();						//骰子
-	bool locate(int x, int y);			//裁判
+	bool locate(int x, int y);			//落子，返回值为是否落子成功，即无重复落子
 	void judge(int location_x, int location_y);			//裁判
 	void renew_board();
+	void win();							//结算动画
 };
 
 #endif // _BOAED_H_
