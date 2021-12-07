@@ -60,7 +60,6 @@ void Board::draw_board()
 			line(BOARD_CORNER_X + i * GRID, BOARD_CORNER_Y, BOARD_CORNER_X + i * GRID, BOARD_CORNER_Y + BOARD_SIZE);
 			line(BOARD_CORNER_X, BOARD_CORNER_Y + i * GRID, BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + i * GRID);
 		}
-		Sleep(1);
 		FlushBatchDraw();
 	}
 	for (int j = 0; j <= 255; j++) {
@@ -106,10 +105,10 @@ bool Board::dice()
 	//DeleteObject(rgn);
 	EndBatchDraw();
 	settextcolor(RGB(8, 118, 202));		//字体颜色设置
-	outtextxy(190, 350, _T('0' + black));
+	outtextxy(190, 350, _T('0' + white));
 	settextcolor(RGB(250, 135, 35));	//字体颜色设置
-	outtextxy(1250, 350, _T('0' + white));
-	return black > white;				//返回先手
+	outtextxy(1250, 350, _T('0' + black));
+	return (black > white);				//返回先手
 }
 
 bool Board::judge(int x, int y)
