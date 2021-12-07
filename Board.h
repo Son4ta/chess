@@ -5,6 +5,7 @@
 #include <graphics.h>
 #include <time.h>
 #include <string>
+using namespace std;
 //#include <conio.h>
 //手动调节
 constexpr auto WINDOS_X = 1600;										//窗口宽
@@ -20,16 +21,19 @@ constexpr auto RADIUS = GRID / 2 - 2;								//棋子半径
 
 class Board {
 public:
-	int record[LINE][LINE];			//棋盘上现有棋子 0无1黑2白
-	bool black;						//下棋顺序
+	int record[LINE + 1][LINE + 1];		//棋盘上现有棋子 0无1黑2白 有16格=有17个点可以下
+	int who_win;						//1黑赢2白赢
+	int who;							//谁在下棋？
 	Board();
-	void main_thread();             //主线程
-	void welcome();					//开始界面
-	void draw_board();				//绘制棋盘
-	void draw_time();				//30秒倒计时
-	void fight();					//下棋！
-	bool dice();					//骰子
-	bool judge(int x, int y);		//裁判
+	void main_thread();					// 主线程
+	void welcome();						//开始界面
+	void draw_board();					//绘制棋盘
+	void draw_time();					//30秒倒计时
+	void fight();						//下棋！
+	void dice();						//骰子
+	bool locate(int x, int y);			//裁判
+	void judge(int location_x, int location_y);			//裁判
+	void renew_board();
 };
 
 #endif // _BOAED_H_
