@@ -1,3 +1,10 @@
+/*******************************************
+ * 武汉工程大学20智能科学与技术一班 Son4ta
+ * 五子棋 for C++ (Ver:2021年12月9日)
+ * https://github.com/Son4ta/chess
+ *
+ *			Power by Son4ta
+ *******************************************/
 #ifndef _BOAED_H_
 #define _BOAED_H_
 
@@ -5,6 +12,7 @@
 #include <graphics.h>
 #include <time.h>
 #include <conio.h>
+#include <stack>
 
 using namespace std;
 //#include <conio.h>
@@ -18,7 +26,6 @@ constexpr auto DECORATE = 15;										//装饰线
 constexpr auto FIX = 4;												//修正
 constexpr auto WARNING = 9;											//警告时间
 //AUTO
-#define MAXSTAR 2000	// 星星总数
 constexpr auto BOARD_CORNER_X = (WINDOS_X - BOARD_SIZE) / 2;		//棋盘左上角坐标x
 constexpr auto BOARD_CORNER_Y = (WINDOS_Y - BOARD_SIZE) / 2;		//棋盘左上角坐标y
 constexpr auto GRID = BOARD_SIZE / LINE;							//格子边长
@@ -31,10 +38,12 @@ public:
 	int who;							//谁在下棋？
 	int num;							//时间
 	int sum_time;						//总时间
-	int count;							//总共有多少棋子辣？
+	int account;						//总共有多少棋子辣？
+	stack <pair<int, int>> step;		//记录每一步坐标的栈
 	Board();
 	void main_thread();					// 主线程
 	void welcome();						//开始界面
+	void display_rule();				//展示规则画面
 	void draw_board();					//绘制棋盘
 	bool time_judge();					//30秒倒计时
 	void fight();						//下棋！
@@ -43,62 +52,7 @@ public:
 	void judge(int location_x, int location_y);			//裁判
 	void renew_board();
 	void win();							//结算动画
+	void traceback();					//回溯悔棋
+	void review();						//复盘画面
 };
-
-//class Star {
-//public:
-//	struct STAR
-//	{
-//		double	x;
-//		int		y;
-//		double	step;
-//		int		color;
-//	};
-//
-//	STAR star[MAXSTAR];
-//
-//	// 初始化星星
-//	void InitStar(int i)
-//	{
-//		star[i].x = 0;
-//		star[i].y = rand() % 900;
-//		star[i].step = (rand() % 5000) / 1000.0 + 1;
-//		star[i].color = (int)(star[i].step * 255 / 6.0 + 0.5);	// 速度越快，颜色越亮
-//		star[i].color = RGB(star[i].color, star[i].color, star[i].color);
-//	}
-//
-//	// 移动星星
-//	void MoveStar(int i)
-//	{
-//		// 擦掉原来的星星
-//		putpixel((int)star[i].x, star[i].y, 0);
-//
-//		// 计算新位置
-//		star[i].x += star[i].step;
-//		if (star[i].x > 1600)	InitStar(i);
-//
-//		// 画新星星
-//		putpixel((int)star[i].x, star[i].y, star[i].color);
-//	}
-//
-//	// 主函数
-//	void star_main()
-//	{
-//		srand((unsigned)time(NULL));	// 随机种子
-//		// 初始化所有星星
-//		for (int i = 0; i < MAXSTAR; i++)
-//		{
-//			InitStar(i);
-//			star[i].x = rand() % 1600;
-//		}
-//
-//		// 绘制星空，按任意键退出
-//		while (!_kbhit())
-//		{
-//			for (int i = 0; i < MAXSTAR; i++)
-//				MoveStar(i);
-//			Sleep(20);
-//		}
-//	}
-//};
 #endif // _BOAED_H_

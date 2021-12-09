@@ -12,7 +12,7 @@ Board::Board()
 	who_win = 0;
 	num = 0;
 	sum_time = 0;
-	count = 0;
+	account = 0;
 }
 
 void Board::main_thread()
@@ -27,7 +27,8 @@ void Board::main_thread()
 	fight();
 	Sleep(1000);
 	win();
-	Sleep(1000);
+	Sleep(4000);
+	review();
 }
 
 void Board::welcome()
@@ -87,7 +88,8 @@ void Board::draw_board()
 		cleardevice();
 	}
 	BeginBatchDraw();
-	for (int i = 0; i != BOARD_SIZE; i += 4) {
+	for (int i = 0; i != BOARD_SIZE; i += 10) {
+		setlinecolor(RGB(255, 255, 255));
 		setlinestyle(PS_SOLID, 3);
 		//绘制边线
 		line(BOARD_CORNER_X, BOARD_CORNER_Y, BOARD_CORNER_X + i, BOARD_CORNER_Y);
@@ -186,7 +188,8 @@ void Board::fight()
 	clock_t start = clock(), end = clock();			//计时用
 	num = TIME - ((end - start) / 1000);			//初始化计时器避免一开始就闪红字
 	cleardevice(); renew_board();
-	while (!who_win && time_judge())				//我超，没人赢，都在演是吧
+	flushmessage();									//刷新缓冲区防止还没开始就有棋子
+	while (!who_win && time_judge() && account != LINE * LINE)//我超，没人赢，都在演是吧
 	{
 		end = clock();
 		peekmessage(&mouse, EM_MOUSE | EM_KEY);		// 获取一条鼠标或按键消息
@@ -197,16 +200,30 @@ void Board::fight()
 			// 如果点左键
 			if (locate(mouse.x, mouse.y)) {			//交给judge函数判断落子位置与输赢
 				who = (who == 1) ? 2 : 1;			//切换执棋者
-				count++;							//记录棋子个数
+				sum_time += 30 - num;					//计时
 				start = clock();					//重置计时器
 				end = clock();
 				num = TIME - ((end - start) / 1000);//初始化计时器
+				flushmessage();						//刷新缓冲区
 			}
 			break;
 
 		case WM_KEYDOWN:
-			if (mouse.vkcode == VK_ESCAPE)
-				return;								// 按 ESC 键退出程序
+			//如果有键被按下
+			//if (mouse.ctrl) {
+			if (mouse.vkcode == 90) {
+				if (account != 0) {
+					traceback();						//按 Z 键撤回一步
+					who = (who == 1) ? 2 : 1;			//切换执棋者
+					start = clock();					//重置计时器
+					end = clock();
+					num = TIME - ((end - start) / 1000);//初始化计时器
+					flushmessage();						//刷新缓冲区
+					mouse.vkcode = -1;
+				}
+			}
+			if (mouse.vkcode == VK_ESCAPE)				// 按 ESC 键退出程序
+				return;
 			break;
 		}
 	}
@@ -287,8 +304,12 @@ bool Board::locate(int x, int y)
 	}
 	//在记录中更新棋盘中的棋子
 	record[location_x][location_y] = who;
+	//记录下此步棋（入栈）
+	step.push(pair<int, int>(location_x, location_y));
 	//判断输赢
 	judge(location_x, location_y);
+	//记录棋子个数
+	account++;
 	//更新棋盘
 	cleardevice();
 	renew_board();
@@ -299,10 +320,10 @@ void Board::judge(int location_x, int location_y) {
 	//判断输赢
 	int count = 0;
 	//左右
-	for (int i = location_x; record[i][location_y] == who && (i >= 0 && i <= LINE); i++) {
+	for (int i = location_x; (i >= 0 && i <= LINE) && record[i][location_y] == who; i++) {
 		count++;
 	}
-	for (int i = location_x; record[i][location_y] == who && (i >= 0 && i <= LINE); i--) {
+	for (int i = location_x; (i >= 0 && i <= LINE) && record[i][location_y] == who; i--) {
 		count++;
 	}
 	count -= 1;				//减去自身重复计算
@@ -311,10 +332,10 @@ void Board::judge(int location_x, int location_y) {
 	}
 	count = 0;				//重置计数器
 	//上下
-	for (int i = location_y; record[location_x][i] == who && (i >= 0 && i <= LINE); i++) {
+	for (int i = location_y; (i >= 0 && i <= LINE) && record[location_x][i] == who; i++) {
 		count++;
 	}
-	for (int i = location_y; record[location_x][i] == who && (i >= 0 && i <= LINE); i--) {
+	for (int i = location_y; (i >= 0 && i <= LINE) && record[location_x][i] == who; i--) {
 		count++;
 	}
 	count -= 1;				//减去自身重复计算
@@ -323,10 +344,10 @@ void Board::judge(int location_x, int location_y) {
 	}
 	count = 0;				//重置计数器
 	//主对角线
-	for (int i = location_x, j = location_y; record[i][j] == who && (i >= 0 && i <= LINE) && (j >= 0 && j <= LINE); i++, j++) {
+	for (int i = location_x, j = location_y; (i >= 0 && i <= LINE) && (j >= 0 && j <= LINE) && record[i][j] == who; i++, j++) {
 		count++;
 	}
-	for (int i = location_x, j = location_y; record[i][j] == who && (i >= 0 && i <= LINE) && (j >= 0 && j <= LINE); i--, j--) {
+	for (int i = location_x, j = location_y; (i >= 0 && i <= LINE) && (j >= 0 && j <= LINE) && record[i][j] == who; i--, j--) {
 		count++;
 	}
 	count -= 1;				//减去自身重复计算
@@ -335,10 +356,10 @@ void Board::judge(int location_x, int location_y) {
 	}
 	count = 0;				//重置计数器
 	//次对角线
-	for (int i = location_x, j = location_y; record[i][j] == who && (i >= 0 && i <= LINE) && (j >= 0 && j <= LINE); i++, j--) {
+	for (int i = location_x, j = location_y; (i >= 0 && i <= LINE) && (j >= 0 && j <= LINE) && record[i][j] == who; i++, j--) {
 		count++;
 	}
-	for (int i = location_x, j = location_y; record[i][j] == who && (i >= 0 && i <= LINE) && (j >= 0 && j <= LINE); i--, j++) {
+	for (int i = location_x, j = location_y; (i >= 0 && i <= LINE) && (j >= 0 && j <= LINE) && record[i][j] == who; i--, j++) {
 		count++;
 	}
 	count -= 1;				//减去自身重复计算
@@ -367,6 +388,7 @@ void Board::renew_board()
 		line(BOARD_CORNER_X + i * GRID, BOARD_CORNER_Y, BOARD_CORNER_X + i * GRID, BOARD_CORNER_Y + BOARD_SIZE);
 		line(BOARD_CORNER_X, BOARD_CORNER_Y + i * GRID, BOARD_CORNER_X + BOARD_SIZE, BOARD_CORNER_Y + i * GRID);
 	}
+	//重写绘制格子
 	for (int i = 0; i <= LINE; i++) {
 		for (int j = 0; j <= LINE; j++) {
 			if (record[i][j] == 1) {
@@ -378,6 +400,22 @@ void Board::renew_board()
 				fillcircle(i * GRID + BOARD_CORNER_X, j * GRID + BOARD_CORNER_Y, RADIUS);
 			}
 		}
+	}
+	//标出最后一步的棋子
+	if (account != 0) {
+		int x = BOARD_CORNER_X + step.top().first * GRID, y = BOARD_CORNER_Y + step.top().second * GRID;
+		setlinestyle(PS_SOLID, 3);
+		setlinecolor(RGB(254, 63, 66));
+		POINT pts1[] = { {x + RADIUS, y + RADIUS / 3}, {x + RADIUS, y + RADIUS}, {x + RADIUS / 3, y + RADIUS} };
+		polyline(pts1, 3);
+		POINT pts2[] = { {x - RADIUS, y + RADIUS / 3}, {x - RADIUS, y + RADIUS}, {x - RADIUS / 3, y + RADIUS} };
+		polyline(pts2, 3);
+		POINT pts3[] = { {x + RADIUS, y - RADIUS / 3}, {x + RADIUS, y - RADIUS}, {x + RADIUS / 3, y - RADIUS} };
+		polyline(pts3, 3);
+		POINT pts4[] = { {x - RADIUS, y - RADIUS / 3}, {x - RADIUS, y - RADIUS}, {x - RADIUS / 3, y - RADIUS} };
+		polyline(pts4, 3);
+		setlinecolor(WHITE);
+		setlinestyle(PS_SOLID, 1);
 	}
 	EndBatchDraw();
 }
@@ -422,7 +460,88 @@ void Board::win()
 		drawtext(_T("黑方棋手胜利"), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 	}
 	if (who_win == 0) {
+		for (int i = 150; i >= 50; i -= 1) {
+			renew_board();
+			setbkcolor(RGB(i, i, i));		//更新背景颜色
+			Sleep(1);
+			cleardevice();
+		}
+		for (int i = 50; i <= 150; i += 4) {
+			setlinecolor(RGB(i, i, i));
+			setfillcolor(RGB(i, i, i));
+			fillrectangle(0, WINDOS_Y / 4, WINDOS_X, (WINDOS_Y / 4) * 3);
+			Sleep(1);
+		}
+		RECT r = { 0, WINDOS_Y / 4, WINDOS_X, (WINDOS_Y / 4) * 3 };
+		settextstyle(100, 0, _T("黑体"));	//字体设置
+		settextcolor(RGB(0, 0, 0));	//字体颜色设置
+		drawtext(_T("平局！胜负未分"), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 	}
 	EndBatchDraw();
-	Sleep(3000);
+}
+
+void Board::traceback()
+{
+	//撤回最后一步
+	record[step.top().first][step.top().second] = 0;
+	//弹栈，删掉最后一步实现悔棋
+	step.pop();
+	//棋子减一
+	account--;
+	//刷新
+	cleardevice();
+	renew_board();
+	//防止有人一直按着Z键
+	Sleep(300);
+}
+
+void Board::review()
+{
+	RECT r = { 0, 0, 0, 0 };
+	int x = 0, y = 0;
+	//防止renew_board再画红框框
+	int i = account;
+	account = 0;
+	//重绘棋盘
+	draw_board();
+	renew_board();
+	//给所有步标上顺序
+	for (; i != 0 && !step.empty(); i--) {
+		//记录坐标后弹栈
+		x = BOARD_CORNER_X + step.top().first * GRID;
+		y = BOARD_CORNER_Y + step.top().second * GRID;
+		step.pop();
+		//数字转字符串
+		wchar_t c[10];
+		_itow_s(i, c, 10, 10);
+		wstring str(c);
+		//字体设置
+		settextstyle(50, 0, _T("黑体"));
+		setbkmode(TRANSPARENT);
+		settextcolor(RGB(254, 63, 66));//字体颜色设置
+		r = { x + RADIUS, y + RADIUS,x - RADIUS, y - RADIUS };
+		drawtext(c, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	}
+	//打印两边的字
+	{
+		r = { 1250, 50, 1550, 150 };
+		settextstyle(50, 0, _T("黑体"));	//字体设置
+		settextcolor(RGB(0, 0, 0));	//字体颜色设置
+		drawtext(_T("对弈复盘"), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		r = { 50, 50, 350, 150 };
+		settextstyle(50, 0, _T("黑体"));	//字体设置
+		settextcolor(RGB(255, 255, 255));	//字体颜色设置
+		drawtext(_T("对弈总用时"), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+
+		r = { 0, 150, 550, 250 };
+		settextstyle(70, 0, _T("黑体"));	//字体设置
+		settextcolor(RGB(255, 255, 255));	//字体颜色设置
+		wchar_t c[10];
+		_itow_s(sum_time, c, 10, 10);
+		wstring str(c);
+		drawtext(c, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	}
+	while (1) {
+		if (!_kbhit())break;
+	}
 }
