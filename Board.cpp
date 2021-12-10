@@ -1,5 +1,6 @@
 #include"Board.h"
-
+//TODO:复盘结束条件
+//TODO:规则显示
 Board::Board()
 {
 	//棋盘所有位置初始化为0
@@ -23,6 +24,8 @@ void Board::main_thread()
 	cleardevice();
 	dice();								//调用骰子函数
 	Sleep(3000);
+	display_rule();
+	Sleep(5000);
 	draw_board();
 	fight();
 	Sleep(1000);
@@ -76,6 +79,26 @@ void Board::welcome()
 		cleardevice();
 		Sleep(1);
 	}
+}
+
+void Board::display_rule()
+{
+	wchar_t t[10];							//数字转字符串
+	_itow_s(TIME, t, 10, 10);
+	t[2] = 'S'; t[3] = '\0';
+	wstring str(t);
+
+	cleardevice();
+	settextstyle(50, 0, _T("黑体"));	//字体设置
+	settextcolor(RGB(255, 255, 255));	//字体颜色设置
+	RECT r = { 0, BOARD_CORNER_Y, WINDOS_X, BOARD_CORNER_Y + 100 };
+	drawtext(_T("1.五枚棋子连成一线或一方时间耗尽则游戏结束"), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	r = { 0, BOARD_CORNER_Y + 200, WINDOS_X, BOARD_CORNER_Y + 300 };
+	drawtext(_T("2.在游戏过程中按 Z 键悔棋，按 ESC 直接结束游戏"), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	r = { 0, BOARD_CORNER_Y + 400, WINDOS_X, BOARD_CORNER_Y + 500 };
+	drawtext(_T("3.本局游戏对弈每步最大用时为"), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	r = { 0, BOARD_CORNER_Y + 500, WINDOS_X, BOARD_CORNER_Y + 600 };
+	drawtext(t, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 }
 
 void Board::draw_board()
@@ -191,7 +214,7 @@ void Board::fight()
 	flushmessage();									//刷新缓冲区防止还没开始就有棋子
 	while (!who_win && time_judge() && account != LINE * LINE)//我超，没人赢，都在演是吧
 	{
-		end = clock();
+		end = clock();								//计时器
 		peekmessage(&mouse, EM_MOUSE | EM_KEY);		// 获取一条鼠标或按键消息
 		num = TIME - ((end - start) / 1000);		//计时器
 		switch (mouse.message)
@@ -200,7 +223,7 @@ void Board::fight()
 			// 如果点左键
 			if (locate(mouse.x, mouse.y)) {			//交给judge函数判断落子位置与输赢
 				who = (who == 1) ? 2 : 1;			//切换执棋者
-				sum_time += 30 - num;					//计时
+				sum_time += (end - start);			//计时
 				start = clock();					//重置计时器
 				end = clock();
 				num = TIME - ((end - start) / 1000);//初始化计时器
@@ -254,11 +277,6 @@ void Board::dice()
 		Sleep(i);						//让数字跳动越来越慢
 		FlushBatchDraw();
 	}
-	//HRGN rgn = CreateRectRgn(0, 390, 1600, 900);
-	// 将该矩形区域设置为裁剪区
-	//setcliprgn(rgn);
-	//clearcliprgn();
-	//DeleteObject(rgn);
 	EndBatchDraw();
 	settextcolor(RGB(8, 118, 202));		//字体颜色设置
 	outtextxy(190, 350, _T('0' + white));
@@ -501,7 +519,8 @@ void Board::review()
 	int x = 0, y = 0;
 	//防止renew_board再画红框框
 	int i = account;
-	account = 0;
+	sum_time /= 1000;			//换算成秒
+	account = 0;				//置0棋子数
 	//重绘棋盘
 	draw_board();
 	renew_board();
@@ -516,10 +535,16 @@ void Board::review()
 		_itow_s(i, c, 10, 10);
 		wstring str(c);
 		//字体设置
-		settextstyle(50, 0, _T("黑体"));
+		settextstyle(45, 0, _T("黑体"));
 		setbkmode(TRANSPARENT);
 		settextcolor(RGB(254, 63, 66));//字体颜色设置
 		r = { x + RADIUS, y + RADIUS,x - RADIUS, y - RADIUS };
+		//如果大于100个棋子就打印成蓝色
+		if (i >= 100) {
+			settextstyle(30, 0, _T("黑体"));
+			settextcolor(RGB(8, 118, 202));
+			r = { x + 2 * RADIUS, y + 2 * RADIUS,x - 2 * RADIUS, y - 2 * RADIUS };
+		}
 		drawtext(c, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 	}
 	//打印两边的字
@@ -541,7 +566,5 @@ void Board::review()
 		wstring str(c);
 		drawtext(c, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 	}
-	while (1) {
-		if (!_kbhit())break;
-	}
+	system("pause");
 }

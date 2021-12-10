@@ -41,6 +41,7 @@ public:
 	int account;						//总共有多少棋子辣？
 	stack <pair<int, int>> step;		//记录每一步坐标的栈
 	Board();
+
 	void main_thread();					// 主线程
 	void welcome();						//开始界面
 	void display_rule();				//展示规则画面
